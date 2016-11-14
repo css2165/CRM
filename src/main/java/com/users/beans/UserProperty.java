@@ -14,13 +14,14 @@ public class UserProperty {
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	private long id;
 
-	private int userId;
+	private long userId;
 	private String propName;
 	private String propValue;
 
-	protected UserProperty() {}
+	protected UserProperty() {
+	}
 
-	public UserProperty(int userId, String propName, String propValue) {
+	public UserProperty(long userId, String propName, String propValue) {
 		this.userId = userId;
 		this.propName = propName;
 		this.propValue = propValue;
@@ -28,10 +29,11 @@ public class UserProperty {
 
 	@Override
 	public String toString() {
-		return "UserProperty [id=" + id + ", userId=" + userId + ", propName=" + propName + ", propValue=" + propValue + "]";
+		return "UserProperty [id=" + id + ", userId=" + userId + ", propName=" + propName + ", propValue=" + propValue
+				+ "]";
 	}
 
-	public int getUserId() {
+	public long getUserId() {
 		return userId;
 	}
 

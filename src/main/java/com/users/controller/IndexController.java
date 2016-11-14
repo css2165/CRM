@@ -1,11 +1,16 @@
 package com.users.controller;
 
+import static com.users.security.Role.ROLE_ADMIN;
+
 import java.util.List;
 import java.util.Optional;
+
+import static com.users.security.Role.ROLE_ADMIN;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.CollectionUtils;
@@ -21,6 +26,7 @@ import com.users.beans.User;
 import com.users.beans.UserImage;
 import com.users.repositories.UserImageRepository;
 import com.users.repositories.UserRepository;
+import com.users.security.PermissionService;
 
 @Controller
 public class IndexController {
@@ -31,6 +37,9 @@ public class IndexController {
 
 	@Autowired
 	private UserImageRepository userImageRepo;
+	
+	@Autowired
+	private PermissionService permissionService;
 
 	@RequestMapping("/greeting")
 	public String greeting(@RequestParam(value = "name", required = false, defaultValue = "World") String name, Model model) {
@@ -38,32 +47,59 @@ public class IndexController {
 		model.addAttribute("repoCount", userRepo.count());
 		return "greeting";
 	}
-
+	//home method
 	@RequestMapping("/")
-	public String listing(Model model) {
-		model.addAttribute("users", userRepo.findAllByOrderByFirstNameAscLastNameAsc());
-		return "list";
+	public String home(Model model) {
+		return permissionService.hasRole(ROLE_ADMIN) ? "redirect:/users" : "redirect:/contacts";
 	}
-
+	
 	@RequestMapping(value = "/login", method = RequestMethod.GET)
 	public ModelAndView getLoginPage(@RequestParam Optional<String> error) {
 		return new ModelAndView("login", "error", error);
 	}
+	
+	//listUsers method
+	@Secured("ROLE_ADMIN")
+	@RequestMapping("/users")
+	public String listUsers(Model model) {
+		model.addAttribute("users", userRepo.findAllByOrderByFirstNameAscLastNameAsc());
+		return "listUsers";
+	}
 
+	
+	//myProfile method
+	@RequestMapping("/myprofile")
+	public String myprofile(Model model) {
+		return profile(permissionService.findCurrentUserId(), model);
+	}
+	
+	//profile method
 	@RequestMapping("/user/{userId}")
 	public String profile(@PathVariable long userId, Model model) {
 		model.addAttribute("user", userRepo.findOne(userId));
+
+		if(!permissionService.canAccessUser(userId)) {
+			log.warn("Cannot allow user to view " + userId);
+			return "redirect:/";
+		}
 
 		List<UserImage> images = userImageRepo.findByUserId(userId);
 		if (!CollectionUtils.isEmpty(images)) {
 			model.addAttribute("userImage", images.get(0));
 		}
+		model.addAttribute("permissions", permissionService);
 		return "profile";
 	}
-
+	
+	//profileEdit method
 	@RequestMapping(value = "/user/{userId}/edit", method = RequestMethod.GET)
 	public String profileEdit(@PathVariable long userId, Model model) {
 		model.addAttribute("user", userRepo.findOne(userId));
+		
+		if(!permissionService.canAccessUser(userId)) {
+			log.warn("Cannot allow user to edit " + userId);
+			return "profile";
+		}
 
 		List<UserImage> images = userImageRepo.findByUserId(userId);
 		if (!CollectionUtils.isEmpty(images)) {
@@ -71,7 +107,8 @@ public class IndexController {
 		}
 		return "profileEdit";
 	}
-
+	
+	//profileSave method
 	@RequestMapping(value = "/user/{userId}/edit", method = RequestMethod.POST)
 	public String profileSave(@ModelAttribute User user,
 			@PathVariable long userId,
@@ -79,6 +116,11 @@ public class IndexController {
 			@RequestParam("file") MultipartFile file,
 			Model model) {
 
+		if(!permissionService.canAccessUser(userId)) {
+			log.warn("Cannot allow user to edit " + userId);
+			return "profile";
+		}
+		
 		log.debug("Saving user " + user);
 		userRepo.save(user);
 		model.addAttribute("message", "User " + user.getEmail() + " saved.");
@@ -108,4 +150,26 @@ public class IndexController {
 
 		return profile(userId, model);
 	}
+	
+	//createContact GET method
+	@Secured("ROLE_ADMIN")
+	@RequestMapping(value = "/user/create", method = RequestMethod.GET)
+	public String createContact(Model model) {
+		model.addAttribute("user", new User());
+		
+		return "userCreate";
+	}
+
+	//create contact POST method
+	@Secured("ROLE_ADMIN")
+	@RequestMapping(value = "/user/create", method = RequestMethod.POST)
+	public String createContact(@ModelAttribute User user,
+			@RequestParam("file") MultipartFile file, Model model) {
+
+		User savedUser = userRepo.save(user);
+		
+	return profileSave(savedUser, savedUser.getId(), false, file, model);
+	}
+
+
 }
