@@ -26,8 +26,7 @@ public class UserImage {
 	@Lob
 	private byte[] image;
 
-	protected UserImage() {
-	}
+	protected UserImage() {}
 
 	public UserImage(long userId) {
 		this.userId = userId;

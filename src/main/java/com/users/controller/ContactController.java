@@ -2,8 +2,6 @@ package com.users.controller;
 
 import java.util.List;
 
-import java.util.List;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +44,6 @@ public class ContactController {
 		return "listContacts";
 	}
 	
-	//contact method
 	@Secured("ROLE_USER")
 	@RequestMapping("/contact/{contactId}")
 	public String contact(@PathVariable long contactId, Model model) {
@@ -59,8 +56,7 @@ public class ContactController {
 		model.addAttribute("permissions", permissionService);
 		return "contact";
 	}
-	
-	//contactEdit method
+
 	@Secured("ROLE_USER")
 	@RequestMapping(value = "/contact/{contactId}/edit", method = RequestMethod.GET)
 	public String contactEdit(@PathVariable long contactId, Model model) {
@@ -77,8 +73,7 @@ public class ContactController {
 		}
 		return "contactEdit";
 	}
-	
-	//profileSave method
+
 	@Secured("ROLE_USER")
 	@RequestMapping(value = "/contact/{contactId}/edit", method = RequestMethod.POST)
 	public String profileSave(@ModelAttribute Contact contact, @PathVariable long contactId,
@@ -120,8 +115,7 @@ public class ContactController {
 
 		return contact(contactId, model);
 	}
-	
-	//createContact GET method
+
 	@Secured("ROLE_USER")
 	@RequestMapping(value = "/contact/create", method = RequestMethod.GET)
 	public String createContact(Model model) {
@@ -129,8 +123,7 @@ public class ContactController {
 		
 		return "contactCreate";
 	}
-	
-	//createContact POST method
+
 	@Secured("ROLE_USER")
 	@RequestMapping(value = "/contact/create", method = RequestMethod.POST)
 	public String createContact(@ModelAttribute Contact contact,

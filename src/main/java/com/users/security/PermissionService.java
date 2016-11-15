@@ -5,11 +5,14 @@ import static com.users.security.Role.ROLE_ADMIN;
 import static com.users.security.Role.ROLE_USER;
 import static org.springframework.security.core.context.SecurityContextHolder.getContext;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
+import com.users.beans.User;
 import com.users.repositories.ContactRepository;
 import com.users.repositories.UserRepository;
 
@@ -22,19 +25,20 @@ public class PermissionService {
 	@Autowired
 	private ContactRepository contactRepository;
 
-	private UsernamePasswordAuthenticationToken getToken() {
-		return (UsernamePasswordAuthenticationToken) 
-				getContext()
-				.getAuthentication();
-	}
+	private AbstractAuthenticationToken getToken() {//User to present simple username and password
+		return (AbstractAuthenticationToken) //returning the username and password
+				getContext().getAuthentication();
+	}	
 
 	public long findCurrentUserId() {
-		return userRepository.findByEmail(getToken().getName()).get(0).getId();
+		List<User> users = userRepository.findByEmail(getToken().getName());
+		return users != null && !users.isEmpty() ? users.get(0).getId() : -1;
 	}
 
+
 	public boolean hasRole(Role role) {
-		for (GrantedAuthority ga : getToken().getAuthorities()) {
-			if (role.toString().equals(ga.getAuthority())) {
+		for (GrantedAuthority ga : getToken().getAuthorities()) {//iterating through users
+			if(role.toString().equals(ga.getAuthority())){ //checking for user's role
 				return true;
 			}
 		}

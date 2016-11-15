@@ -1,11 +1,11 @@
+
 package com.users.controller;
 
 import static com.users.security.Role.ROLE_ADMIN;
+import static com.users.security.Role.ROLE_USER;
 
 import java.util.List;
 import java.util.Optional;
-
-import static com.users.security.Role.ROLE_ADMIN;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,9 +24,12 @@ import org.springframework.web.servlet.ModelAndView;
 
 import com.users.beans.User;
 import com.users.beans.UserImage;
+import com.users.beans.UserRole;
 import com.users.repositories.UserImageRepository;
 import com.users.repositories.UserRepository;
+import com.users.repositories.UserRoleRepository;
 import com.users.security.PermissionService;
+import com.users.service.ImageService;
 
 @Controller
 public class IndexController {
@@ -41,24 +44,25 @@ public class IndexController {
 	@Autowired
 	private PermissionService permissionService;
 
+	@Autowired
+	private ImageService imageService;
+	
+	@Autowired
+	private UserRoleRepository userRoleRepo;
+	
+
 	@RequestMapping("/greeting")
 	public String greeting(@RequestParam(value = "name", required = false, defaultValue = "World") String name, Model model) {
 		model.addAttribute("name", name);
 		model.addAttribute("repoCount", userRepo.count());
 		return "greeting";
 	}
-	//home method
+	
 	@RequestMapping("/")
 	public String home(Model model) {
 		return permissionService.hasRole(ROLE_ADMIN) ? "redirect:/users" : "redirect:/contacts";
 	}
-	
-	@RequestMapping(value = "/login", method = RequestMethod.GET)
-	public ModelAndView getLoginPage(@RequestParam Optional<String> error) {
-		return new ModelAndView("login", "error", error);
-	}
-	
-	//listUsers method
+
 	@Secured("ROLE_ADMIN")
 	@RequestMapping("/users")
 	public String listUsers(Model model) {
@@ -66,14 +70,21 @@ public class IndexController {
 		return "listUsers";
 	}
 
+	@RequestMapping(value = "/login", method = RequestMethod.GET)
+	public ModelAndView getLoginPage(@RequestParam Optional<String> error) {
+		return new ModelAndView("login", "error", error);
+	}
 	
-	//myProfile method
 	@RequestMapping("/myprofile")
 	public String myprofile(Model model) {
 		return profile(permissionService.findCurrentUserId(), model);
 	}
-	
-	//profile method
+
+	@RequestMapping("/register")
+	public String register(Model model) {
+	return createUser(model);
+}
+
 	@RequestMapping("/user/{userId}")
 	public String profile(@PathVariable long userId, Model model) {
 		model.addAttribute("user", userRepo.findOne(userId));
@@ -90,8 +101,7 @@ public class IndexController {
 		model.addAttribute("permissions", permissionService);
 		return "profile";
 	}
-	
-	//profileEdit method
+
 	@RequestMapping(value = "/user/{userId}/edit", method = RequestMethod.GET)
 	public String profileEdit(@PathVariable long userId, Model model) {
 		model.addAttribute("user", userRepo.findOne(userId));
@@ -107,8 +117,7 @@ public class IndexController {
 		}
 		return "profileEdit";
 	}
-	
-	//profileSave method
+
 	@RequestMapping(value = "/user/{userId}/edit", method = RequestMethod.POST)
 	public String profileSave(@ModelAttribute User user,
 			@PathVariable long userId,
@@ -125,51 +134,35 @@ public class IndexController {
 		userRepo.save(user);
 		model.addAttribute("message", "User " + user.getEmail() + " saved.");
 
-		if (!file.isEmpty()) {
-			try {
-				List<UserImage> images = userImageRepo.findByUserId(user.getId());
-				UserImage img = (images.size() > 0) ? images.get(0) : new UserImage(userId);
-				img.setContentType(file.getContentType());
-				img.setImage(file.getBytes());
-				userImageRepo.save(img);
-
-				log.debug("Saved Image");
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-
-		} else if (removeImage) {
-			log.debug("Removing Image");
-			// user.setImage(null);
-			List<UserImage> images = userImageRepo.findByUserId(user.getId());
-
-			for (UserImage img : images) {
-				userImageRepo.delete(img);
-			}
+		if(removeImage) {
+			imageService.deleteImage(user);
+		} else {
+			imageService.saveImage(file, user);
 		}
 
+		
 		return profile(userId, model);
 	}
 	
-	//createContact GET method
-	@Secured("ROLE_ADMIN")
 	@RequestMapping(value = "/user/create", method = RequestMethod.GET)
-	public String createContact(Model model) {
+	public String createUser(Model model) {
 		model.addAttribute("user", new User());
 		
 		return "userCreate";
 	}
-
-	//create contact POST method
-	@Secured("ROLE_ADMIN")
+	
 	@RequestMapping(value = "/user/create", method = RequestMethod.POST)
-	public String createContact(@ModelAttribute User user,
+	public String createUser(@ModelAttribute User user,
 			@RequestParam("file") MultipartFile file, Model model) {
 
-		User savedUser = userRepo.save(user);
+		log.info(user.toString());
 		
-	return profileSave(savedUser, savedUser.getId(), false, file, model);
+		User savedUser = userRepo.save(user);
+		UserRole role = new UserRole(savedUser, ROLE_USER);		
+		userRoleRepo.save(role);
+		imageService.saveImage(file, savedUser);
+
+		return profile(savedUser.getId(), model);
 	}
-
-
+	
 }

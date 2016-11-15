@@ -22,9 +22,10 @@ public class User {
 	private String email;
 	private String phoneNumber;
 	private String password;
-	private boolean active;
 	private String twitterHandle;
 	private String facebookUrl;
+
+	private boolean active;
 
 	public User() {
 		active = true;
@@ -41,7 +42,8 @@ public class User {
 
 	@Override
 	public String toString() {
-		return "User [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email + ", phoneNumber=" + phoneNumber + ", password=" + password + ", active=" + active + "]";
+		return "User [id=" + id + ", firstName=" + firstName + ", lastName=" + lastName + ", email=" + email
+				+ ", phoneNumber=" + phoneNumber + ", password=" + password + ", active=" + active + "]";
 	}
 
 	public String getFirstName() {

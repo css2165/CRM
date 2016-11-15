@@ -1,30 +1,10 @@
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:sec="http://www.springframework.org/schema/security">
-<head></head>
+<!DOCTYPE html>
+<html>
+<head>
+</head>
 <body>
-	<div class="navbar navbar-inverse navbar-fixed-top" th:fragment="header">
-		<div class="container">
-			<div class="navbar-header">
-				<button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
-					<span class="icon-bar"></span> <span class="icon-bar"></span> <span class="icon-bar"></span>
-				</button>
-				<a class="navbar-brand" href="#">Smoothie Co.</a>
-			</div>
-		   	<div class="navbar-collapse collapse">    
-                <ul class="nav navbar-nav">
-                    <li sec:authorize="hasRole('ROLE_ADMIN')" th:class="${#httpServletRequest.requestURI.contains('user')?'active':null}"><a href="#" th:href="@{/users}">Users</a></li>
-        <!--            <li sec:authorize="hasRole('ROLE_ADMIN')" th:class="${#httpServletRequest.requestURI.contains('user')?'active':null}"><a href="#" th:href="@{/contacts}">Contact</a></li>
-                    <li sec:authorize="hasRole('ROLE_ADMIN')" th:class="${#httpServletRequest.requestURI.contains('user')?'active':null}"><a href="#" th:href="@{/profile}">My Profile</a></li>
-                    -->
-                </ul>
-                <ul class="nav navbar-nav navbar-right" sec:authorize="isAuthenticated()">
-                    <li><a href="#" onclick="$('#logoutForm').submit();">Logout</a></li>
-                </ul>
-                <form th:action="@{/logout}" method="post" style="display: none;" id="logoutForm" sec:authorize="isAuthenticated()">
-                    <input type="submit" value="Log Out"/>
-                </form>
-     		</div>
-     		
-     	</div>
-     </div>
-    </body>
-    </html>
+	<div th:fragment="footer">
+		&copy; <span th:text="${#dates.format(#dates.createNow(), 'yyyy')}">2016</span> Smoothie Co.
+	</div>
+</body>
+</html>

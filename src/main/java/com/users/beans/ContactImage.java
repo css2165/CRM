@@ -26,8 +26,7 @@ public class ContactImage {
 	@Lob
 	private byte[] image;
 
-	protected ContactImage() {
-	}
+	protected ContactImage() {}
 
 	public ContactImage(long contactId) {
 		this.contactId = contactId;
